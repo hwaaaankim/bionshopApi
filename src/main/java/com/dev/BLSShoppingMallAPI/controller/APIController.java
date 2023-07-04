@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dev.BLSShoppingMallAPI.constant.JwtTokenProvider;
 import com.dev.BLSShoppingMallAPI.model.SignModel;
 import com.dev.BLSShoppingMallAPI.model.member.Member;
+import com.dev.BLSShoppingMallAPI.repository.MemberRepository;
 import com.dev.BLSShoppingMallAPI.service.MemberService;
 
 @RestController
@@ -30,6 +32,9 @@ public class APIController {
 	@Autowired
     private MemberService memberService;
 	
+	@Autowired
+	private MemberRepository memberRepository;
+	
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 	
@@ -38,7 +43,7 @@ public class APIController {
 	    return new BCryptPasswordEncoder();
 	}
     
-	@PostMapping("/login")
+	@PostMapping("/loginProcess")
 	public Object login(
 			@RequestBody Member member
 			) {
@@ -67,12 +72,16 @@ public class APIController {
 		}
 	}
 	
-	@PostMapping("/register")
-	public Object register(
+	@PostMapping("/memberRegistration")
+	public Object memberRegistration(
 			@RequestBody Member signUp
 			) {
 		Member member = signUp;
-		member.setRoles("ROLE_MEMBER");
+		if(signUp.getJob() == 1) {
+			member.setRoles("ROLE_MEMBER");
+		}else if(signUp.getJob() == 2) {
+			member.setRoles("ROLE_DEALER");
+		}
 		member.setEnabled(true);
 		member.setPassword(passwordEncoder().encode(signUp.getPassword()));
 		SignModel signModel = new SignModel();
@@ -80,7 +89,13 @@ public class APIController {
 		int result = memberService.signIn(member);
 		if(result == 1) {
 			signModel.setMember(member);
-			signModel.setMessage("REGISTRATION SUCCESS");
+			if(member.getJob() == 2) {
+				signModel.setMessage("You need inspection about document you sent. After that \r\n" + 
+						"we will sent result to your email or SMS\r\n" + 
+						"");
+			}else {
+				signModel.setMessage("REGISTRATION SUCCESS");
+			}
 			
 			return signModel;
 		}else if(result == -1) {
@@ -102,10 +117,32 @@ public class APIController {
 			HttpServletRequest request
 			) {
 		String token = jwtTokenProvider.resolveToken(request);
-		System.out.println(token);
-		return token;
+		if(jwtTokenProvider.validateToken(token)) {
+			String username = jwtTokenProvider.getUserPk(token);
+			
+			return memberRepository.findByUsername(username).get().getRoles();
+		}else {
+
+			return "INVALID";
+		}
 		
 	}
+	
+	@PutMapping("/memberInfoUpdate")
+	public Object memberInfoUpdate(
+			@RequestBody Member signUp
+			) {
+		return memberService.memberUpdate(signUp);
+	}
+	
+	@PutMapping("/memberPasswordUpdate")
+	public Object memberPasswordUpdate(
+			@RequestBody Member signUp
+			) {
+		return memberService.memberPasswordUpdate(signUp);
+	}
+	
+	
 	
 	@GetMapping("/auth")
 	public String auth() {

@@ -38,6 +38,9 @@ public class Member implements UserDetails{
 	@Column(name="MEMBER_USERNAME")
 	private String username;
 	
+	@Column(name="MEMBER_NAME")
+	private String name;
+	
 	@Column(name="MEMBER_PASSWORD")
 	private String password;
 	
@@ -52,6 +55,9 @@ public class Member implements UserDetails{
 	
 	@Column(name="MEMBER_ROLE")
 	private String roles;
+	
+	@Column(name="MEMBER_JOB")
+	private int job;
 	
 	@Column(name="MEMBER_ENABLED")
 	private Boolean enabled;
