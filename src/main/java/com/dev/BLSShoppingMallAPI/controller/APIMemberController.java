@@ -27,7 +27,7 @@ import com.dev.BLSShoppingMallAPI.service.MemberService;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-public class APIController {
+public class APIMemberController {
 
 	@Autowired
     private MemberService memberService;
