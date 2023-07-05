@@ -2,12 +2,14 @@ package com.dev.BLSShoppingMallAPI.config;
 
 import java.util.Arrays;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -33,6 +35,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
         return super.authenticationManagerBean();
     }
 	
+	@Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // 정적 자원에 대해서 Security를 적용하지 않음으로 설정
+        return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.httpBasic()
@@ -49,7 +57,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 				.antMatchers("/api/v1/login").permitAll()
 				.antMatchers("/api/v1/register").permitAll()
 				.antMatchers("/api/v1/any").permitAll()
-				.antMatchers("/api/v1/auth").hasRole("MEMBER")
+				.antMatchers("/api/v1/administration/**").hasRole("MEMBER")
 			.anyRequest().permitAll()
 			.and()
 			.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
